@@ -39,9 +39,15 @@ const normalizeUrl = (value: string): string =>
 export const toLangAttribute = (locale: string): string =>
   locale.replace("_", "-")
 
-/** Resolves an asset path against `siteUrl`; social crawlers reject relative image URLs. */
+/**
+ * Resolves an asset path against `siteUrl`; social crawlers reject relative
+ * image URLs. Joins on exactly one slash, so a path written without a leading
+ * one does not produce `https://example.comog-image.png`.
+ */
 export const absolute = (config: SeoConfig, path: string): string =>
-  /^https?:\/\//u.test(path) ? path : `${config.siteUrl}${path}`
+  /^https?:\/\//u.test(path)
+    ? path
+    : `${config.siteUrl}/${path.replace(/^\/+/u, "")}`
 
 export const resolveSeo = (
   env: Record<string, string | undefined>,

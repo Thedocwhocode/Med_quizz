@@ -1,5 +1,5 @@
 import type { ContentPage } from "./content"
-import { escapeHtml, type SeoConfig } from "./seo-config"
+import { absolute, escapeHtml, type SeoConfig } from "./seo-config"
 
 const styles = `
 :root { color-scheme: dark; }
@@ -131,11 +131,7 @@ export const renderContentPage = (
     ? [
         `    <link rel="canonical" href="${escapeHtml(url)}" />`,
         `    <meta property="og:url" content="${escapeHtml(url)}" />`,
-        `    <meta property="og:image" content="${escapeHtml(
-          /^https?:\/\//u.test(config.image)
-            ? config.image
-            : `${config.siteUrl}${config.image}`,
-        )}" />`,
+        `    <meta property="og:image" content="${escapeHtml(absolute(config, config.image))}" />`,
       ].join("\n")
     : ""
 
