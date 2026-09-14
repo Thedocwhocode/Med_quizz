@@ -2,8 +2,10 @@ import defaultLogo from "@razzia/web/assets/logo.svg"
 import { getBranding, imageFallback } from "@razzia/web/branding"
 import GithubIcon from "@razzia/web/components/GithubIcon"
 import type { PropsWithChildren } from "react"
+import { useTranslation } from "react-i18next"
 
 const Background = ({ children }: PropsWithChildren) => {
+  const { t } = useTranslation()
   const branding = getBranding()
   const logo = branding?.logo ?? defaultLogo
   const appName = branding?.appName ?? "Razzia"
@@ -23,16 +25,23 @@ const Background = ({ children }: PropsWithChildren) => {
       />
       {children}
 
-      <a
-        href="https://github.com/Ralex91/Razzia"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 text-sm font-semibold text-white/50 transition-colors hover:text-white/80"
-      >
-        <GithubIcon size={14} />
-        {/* oxlint-disable-next-line no-undef */}
-        Razzia - v{__APP_VERSION__}
-      </a>
+      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-4 text-sm font-semibold text-white/50">
+        {/* Slug of the statically rendered content page, see `packages/web/content.ts`. */}
+        <a href="/sobre" className="transition-colors hover:text-white/80">
+          {t("common:about")}
+        </a>
+
+        <a
+          href="https://github.com/Ralex91/Razzia"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 transition-colors hover:text-white/80"
+        >
+          <GithubIcon size={14} />
+          {/* oxlint-disable-next-line no-undef */}
+          Razzia - v{__APP_VERSION__}
+        </a>
+      </div>
     </section>
   )
 }

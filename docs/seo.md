@@ -8,6 +8,27 @@ The web app is a client-side React SPA. Googlebot does run JavaScript, but it do
 
 So the metadata is injected into `index.html` while Vite builds, not applied by the app at runtime. This is the one part of the app that cannot be configured through `config/branding/` the way theming is.
 
+## Content pages
+
+Metadata makes the site presentable. It does not make it rank -- ranking needs indexable text that answers what someone typed into a search box, and the join screen is a room-code input.
+
+That text lives in `packages/web/content.ts` and is rendered to complete, JavaScript-free HTML documents at build time. One page ships by default, served at `/sobre`.
+
+**Edit that copy.** It is written for a medical-teaching audience as a starting point; generic text is exactly what a search engine discards. Each page defines:
+
+- `slug` -- the URL path (`sobre` is served at `/sobre`)
+- `lang` -- BCP 47 language of the copy, e.g. `pt-BR`; it must match what you actually wrote
+- `title`, `heading`, `description`, `intro`
+- `sections` -- headings with paragraphs and optional bullet lists
+- `faqHeading` and `faq` -- emitted as schema.org `FAQPage` markup, which is what lets Google show the questions directly in a result
+- `cta` -- the link back into the app
+
+Add a page by appending to the array; it is rendered, listed in `sitemap.xml`, and served at its slug automatically. Nothing else needs changing.
+
+The home screen footer links to `/sobre` via the `common:about` translation key. If you rename the slug, update that link in `packages/web/src/components/Background.tsx`.
+
+More pages on distinct topics beat one page covering everything: each targets a different search, and a page that answers one question well outranks a page that mentions ten.
+
 ## What is indexable
 
 Razzia is a live quiz tool, not a content site. Only one route is worth putting in a search index:
@@ -58,7 +79,10 @@ docker build \
 `pnpm build` writes into `packages/web/dist/`:
 
 - `robots.txt` — always
+- `<slug>.html` — one per entry in `content.ts`, always
 - `sitemap.xml` — only when `VITE_SITE_URL` is set and `VITE_SITE_INDEXABLE` is not `false`, since sitemap entries must be absolute URLs
+
+The bundled nginx resolves `/sobre` to `sobre.html` via `try_files $uri $uri.html`. Replicate that if you serve the build with something else.
 
 ## Share preview image
 

@@ -1,59 +1,13 @@
 import type { Plugin } from "vite"
-
-export interface SeoConfig {
-  siteUrl: string
-  siteName: string
-  description: string
-  locale: string
-  image: string
-  indexable: boolean
-}
-
-const defaults: SeoConfig = {
-  siteUrl: "",
-  siteName: "Razzia",
-  description:
-    "Open-source quiz platform: host live quizzes on your own server, players join from any device with a room code.",
-  locale: "en_US",
-  image: "/og-image.png",
-  indexable: true,
-}
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/gu, "&amp;")
-    .replace(/</gu, "&lt;")
-    .replace(/>/gu, "&gt;")
-    .replace(/"/gu, "&quot;")
-
-/** Treats a blank variable as unset, so an empty value falls back to the default. */
-const trimmed = (value: string | undefined): string | undefined => {
-  const result = value?.trim()
-
-  return result === "" ? undefined : result
-}
-
-/** Strips the trailing slash so `siteUrl + path` never produces a double slash. */
-const normalizeUrl = (value: string): string =>
-  value.trim().replace(/\/+$/u, "")
-
-export const resolveSeo = (
-  env: Record<string, string | undefined>,
-): SeoConfig => ({
-  siteUrl: normalizeUrl(trimmed(env.VITE_SITE_URL) ?? defaults.siteUrl),
-  siteName: trimmed(env.VITE_SITE_NAME) ?? defaults.siteName,
-  description: trimmed(env.VITE_SITE_DESCRIPTION) ?? defaults.description,
-  locale: trimmed(env.VITE_SITE_LOCALE) ?? defaults.locale,
-  image: trimmed(env.VITE_SITE_IMAGE) ?? defaults.image,
-  indexable: env.VITE_SITE_INDEXABLE !== "false",
-})
-
-/** `og:locale` uses `pt_BR`, the `lang` attribute uses `pt-BR`. */
-const toLangAttribute = (locale: string): string => locale.replace("_", "-")
-
-/** Resolves an asset path against `siteUrl`; social crawlers reject relative image URLs. */
-const absolute = (config: SeoConfig, path: string): string =>
-  /^https?:\/\//u.test(path) ? path : `${config.siteUrl}${path}`
+import { contentPages } from "./content"
+import { renderContentPage } from "./render-page"
+import {
+  absolute,
+  escapeHtml,
+  resolveSeo,
+  toLangAttribute,
+  type SeoConfig,
+} from "./seo-config"
 
 const buildTags = (config: SeoConfig): string => {
   const title = escapeHtml(config.siteName)
@@ -106,21 +60,43 @@ const buildRobots = (config: SeoConfig): string => {
   return `${lines.join("\n")}\n`
 }
 
-const buildSitemap = (config: SeoConfig): string =>
-  `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${config.siteUrl}/</loc>
+const buildSitemap = (config: SeoConfig): string => {
+  const urls = [
+    { loc: `${config.siteUrl}/`, priority: "1.0" },
+    ...contentPages.map((page) => ({
+      loc: `${config.siteUrl}/${page.slug}`,
+      priority: "0.8",
+    })),
+  ]
+
+  const entries = urls
+    .map(
+      ({ loc, priority }) =>
+        `  <url>
+    <loc>${loc}</loc>
     <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
-  </url>
+    <priority>${priority}</priority>
+  </url>`,
+    )
+    .join("\n")
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}
 </urlset>
 `
+}
 
 /**
- * Injects SEO metadata into `index.html` at build time and emits `robots.txt`.
- * Social crawlers (WhatsApp, Telegram, LinkedIn) never run JavaScript, so these
- * tags have to be in the served HTML rather than applied by the app at runtime.
+ * Injects SEO metadata into `index.html`, emits `robots.txt`, and renders the
+ * static content pages -- all at build time.
+ *
+ * The app is a client-side SPA, and social crawlers (WhatsApp, Telegram,
+ * LinkedIn) run no JavaScript at all, so anything they must read has to be in
+ * the served HTML rather than applied by the app once it boots. The same holds
+ * for the content pages: they are the only indexable text on the site, so they
+ * are emitted as complete documents instead of SPA routes.
+ *
  * A `sitemap.xml` is emitted only when `VITE_SITE_URL` is set, since sitemap
  * entries must be absolute URLs.
  */
@@ -157,6 +133,14 @@ export const seo = (
           type: "asset",
           fileName: "sitemap.xml",
           source: buildSitemap(config),
+        })
+      }
+
+      for (const page of contentPages) {
+        this.emitFile({
+          type: "asset",
+          fileName: `${page.slug}.html`,
+          source: renderContentPage(page, config),
         })
       }
     },
