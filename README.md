@@ -118,6 +118,7 @@ pnpm start
 - [Configuration](docs/configuration.md): manager password, via the `config` folder.
 - [Quiz](docs/quiz.md): creating and structuring quizzes.
 - [Branding](docs/branding.md): optional custom theming.
+- [SEO](docs/seo.md): optional search-engine and link-preview metadata.
 - [Reverse Proxy](docs/reverse-proxy.md): running behind Traefik, Nginx, Caddy, or another reverse proxy.
 - [WebSocket Protocol](docs/websocket-protocol.md): build a custom client (e.g. an ESP32 physical buzzer).
 
