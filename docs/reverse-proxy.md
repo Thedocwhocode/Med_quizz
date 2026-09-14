@@ -70,3 +70,4 @@ Any reverse proxy works as long as it:
 - Forwards all paths (`/`, `/branding/`, `/ws`) to the container's port `3000`
 - Passes through `Upgrade` and `Connection` headers for WebSocket upgrades on `/ws`
 - Uses a generous read/idle timeout (players stay connected for the whole game, potentially longer than a default 60s timeout)
+- Preserves the `X-Robots-Tag` response header on `/manager` and `/party` (or sets it itself), which keeps the private area and ephemeral game rooms out of search results -- see [SEO](seo.md)

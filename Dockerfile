@@ -15,6 +15,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 
+# SEO metadata is baked into index.html at build time: social crawlers do not run
+# JavaScript, so the tags cannot be applied by the app at runtime. See docs/seo.md.
+ARG VITE_SITE_URL
+ARG VITE_SITE_NAME
+ARG VITE_SITE_DESCRIPTION
+ARG VITE_SITE_LOCALE
+ARG VITE_SITE_IMAGE
+ARG VITE_SITE_INDEXABLE
+
 RUN pnpm build
 
 # ---- RUNNER ----

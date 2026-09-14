@@ -5,8 +5,9 @@ import fs from "node:fs"
 import type { IncomingMessage, ServerResponse } from "node:http"
 import path from "node:path"
 import { fileURLToPath } from "url"
-import { defineConfig, type Plugin } from "vite"
+import { defineConfig, loadEnv, type Plugin } from "vite"
 import { version } from "../../package.json"
+import { seo } from "./seo"
 
 const brandingDir = fileURLToPath(
   new URL("../../config/branding", import.meta.url),
@@ -63,7 +64,7 @@ const brandingServer = (): Plugin => ({
   },
 })
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },
@@ -77,6 +78,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     brandingServer(),
+    seo(
+      loadEnv(mode, fileURLToPath(new URL("../..", import.meta.url)), "VITE_"),
+    ),
   ],
   resolve: {
     alias: {
@@ -106,4 +110,4 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 2000,
   },
-})
+}))
